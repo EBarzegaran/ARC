@@ -9,5 +9,5 @@ Overlap = 1250;
 FreqBand = [1 15];
 
 %%
-ARC.PARAFACanalysis(ProjectPath ,'EpochLen' ,EpochLen ,'Overlap' ,Overlap , 'FreqBand', FreqBand);
+ARC.PARAFACanalysis(ProjectPath ,'EpochLen' ,EpochLen ,'Overlap' ,Overlap , 'FreqBand', FreqBand,'ResultsPath','C:\Users\Elhamkhanom\Documents\My works\LongtermProject\ARCProject\Results');
 

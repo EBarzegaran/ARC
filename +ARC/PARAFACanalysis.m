@@ -7,7 +7,8 @@ opt = ParseArgs(varargin,...
     'Space'      ,'Electrode',...
     'Conditions' ,[],...
     'Subjectinfo'   ,[],...
-    'SubjectSelect' ,[]...
+    'SubjectSelect' ,[],...
+    'ResultsPath'   ,[]...
         );
     
 EpLen = opt.EpochLen; % Epoch length
@@ -31,10 +32,16 @@ for S = 1:numel(opt.SubjectSelect)
     sub = opt.SubjectSelect(S);
     display([SubjectData(sub).SubID]);
     temp = ARC.RES();
-    if ~temp.loadRES(fullfile(ProjectPath ,'FFTData'),SubjectData(sub))
+    if isempty(temp.loadRES(fullfile(ProjectPath ,'FFTData'),SubjectData(sub)))
         [RESdata] = RawEEGtoRES(ProjectPath,SubjectData(sub),opt.EpochLen ,opt.Overlap ,opt.FreqBand(2),opt.FreqBand(1));
         RESdata.saveRES(fullfile(ProjectPath ,'FFTData'));
+    else
+        RESdata = temp.loadRES(fullfile(ProjectPath ,'FFTData'),SubjectData(sub));
     end
+    if ~exist(fullfile(opt.ResultsPath,'Specrum'),'dir')
+        mkdir(fullfile(opt.ResultsPath,'Specrum'));
+    end
+    RESdata.PlotSpectrum('SavePath',fullfile(opt.ResultsPath,'Specrum'));
 end
 
 end

@@ -21,7 +21,7 @@ function [RESdata] = RawEEGtoRES(ProjectPath,SubjectInfo, EpLen, MovWin ,HF,LF)
         if ~isempty(FileInd)
             FileName = files{FileInd}; 
             [~,FileName,~] = fileparts(FileName); % 
-            [DATA,EV,SEG] = prepare_events(fullfile(SubName,FileName));
+            [DATA,EV,~] = prepare_events(fullfile(SubName,FileName));
             % average refrencing
             DATA.label{32}= 'CPz'; % I replace EOC by CPz;
             DATA.data=DATA.data(1:64,:); 
@@ -31,9 +31,9 @@ function [RESdata] = RawEEGtoRES(ProjectPath,SubjectInfo, EpLen, MovWin ,HF,LF)
             % preprocess events and Calculating frequency components
             EpEv =events_preprocessing(EV,DATA, EpLen, MovWin,1);
             if (Cond==1 || Cond==4 )
-                [FftData,CohData,cohf]= fftprocessing(DATA,EpEv,EpLen,0,HF,LF,1);
+                [FftData,Freq,CohData,~]= fftprocessing(DATA,EpEv,EpLen,0,HF,LF,1);
             else
-                [FftData,CohData]= fftprocessing(DATA,EpEv,EpLen,0,HF,LF,1);
+                [FftData,Freq,CohData]= fftprocessing(DATA,EpEv,EpLen,0,HF,LF,1);
             end
             
             EpEv2 =events_preprocessing(EV,DATA, EpLen, EpLen,1);% For epoching the data, the overlap is zero
@@ -47,7 +47,7 @@ function [RESdata] = RawEEGtoRES(ProjectPath,SubjectInfo, EpLen, MovWin ,HF,LF)
             end
         end
     end
-RESdata = ARC.RES(SubjectInfo,FData,CondNames,EpLen,MovWin);
+RESdata = ARC.RES(SubjectInfo,FData,CondNames,EpLen,MovWin,Freq,DATA.label);
 end
 
 %% EVENT marking functions
@@ -253,7 +253,7 @@ for ev = 1:10
 
 end
 end
-function [FData,CohData,cohf]= fftprocessing(DATA,EpEv,EpLen,Cohcom,hf,lf,param)
+function [FData,freq,CohData,cohf]= fftprocessing(DATA,EpEv,EpLen,Cohcom,hf,lf,param)
 % calculate fft, if SurfL is 1, then surface laplacian is applied
 % calculates coherence if Cohcom==1
 
@@ -265,6 +265,7 @@ Win= repmat(hann(EpLen)',[size(DATA.data,1) 1]);
 f =500/2*linspace(0,1,EpLen/2+1);
 HF=find(f<=hf,1,'last');
 LF=find(f>=lf,1,'first');
+freq = f(LF:HF);
 for ev = 1:10
 
     FEEG=[];cm=[];
@@ -285,7 +286,7 @@ for ev = 1:10
             
             if Cohcom==1
                 for i = 1:size(ELsym,1)
-                    [C F]=mscohere(EEG(ELsym(i,1),:),EEG(ELsym(i,2),:),[],[],2500,500);
+                    [C]=mscohere(EEG(ELsym(i,1),:),EEG(ELsym(i,2),:),[],[],2500,500);
                     cm(i,:,ep)= C((F>=0 & F<30));
                 end
             end
