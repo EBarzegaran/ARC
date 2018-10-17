@@ -137,28 +137,8 @@ classdef RES
             
             % prepare the power spectrum for plotting
             objConds = {obj.FFTData(:).Condition};
+            Inds = FindConditions(obj,opt.Conditions);
             for c = 1:numel(opt.Conditions)
-                 switch opt.Conditions{c}
-                     case 'REC' 
-                         Inds{c} = find(contains(lower(objConds),'rec'));
-                     case 'REC1'
-                         Inds{c} = find(strcmpi(objConds,'rec'));
-                     case {'REC2','REC-Plast'}
-                         Inds{c} = find(strcmpi(objConds,'REC-mu'));
-                     case {'REC3','REC-HSMT'}
-                         Inds{c} = find(strcmpi(objConds,'REC-hob'));
-                     case {'REC4','REC-HN'}
-                         Inds{c} = find(strcmpi(objConds,'REC-hn'));
-                     case 'REO'
-                         Inds{c} = find(strcmpi(objConds,'REO'));
-                     case 'Plast'
-                         Inds{c} = find(strcmpi(objConds,'Plast'));
-                     case 'HSMT'
-                         Inds{c} = find(contains(lower(objConds),{'hob1','hob2'}));
-                     case 'HN'
-                         Inds{c} = find(contains(lower(objConds),{'hn1','hn2'}));
-                 end
-                 
                  S = {obj.FFTData(Inds{c}).Data};
                  Spec{c} = mean(sqrt(abs(cat(3,S{:}))),3);
             end
@@ -208,6 +188,38 @@ classdef RES
                 CName = [opt.Conditions{:}];
                 print(fullfile(opt.SavePath,['EEGSPectrum_' obj.SubjectInfo.SubID '_RecordNum' num2str(obj.SubjectInfo.Longitude+1) '_' EName '_' CName '.tif']),'-r300','-dtiff');
                 
+            end
+        end
+        
+        function Inds = FindConditions(obj,Conditions)
+            % find the index of obj.FFTData with specified conditions
+            % INPUT: Conditions is a cell array of strings indicating
+                    % conditions of interest
+            if ~iscell(Conditions)
+                Conditions = {Conditions};
+            end
+            objConds = {obj.FFTData(:).Condition};
+            for c = 1:numel(Conditions)
+                 switch Conditions{c}
+                     case 'REC' 
+                         Inds{c} = find(contains(lower(objConds),'rec'));
+                     case 'REC1'
+                         Inds{c} = find(strcmpi(objConds,'rec'));
+                     case {'REC2','REC-Plast'}
+                         Inds{c} = find(strcmpi(objConds,'REC-mu'));
+                     case {'REC3','REC-HSMT'}
+                         Inds{c} = find(strcmpi(objConds,'REC-hob'));
+                     case {'REC4','REC-HN'}
+                         Inds{c} = find(strcmpi(objConds,'REC-hn'));
+                     case 'REO'
+                         Inds{c} = find(strcmpi(objConds,'REO'));
+                     case 'Plast'
+                         Inds{c} = find(strcmpi(objConds,'Plast'));
+                     case 'HSMT'
+                         Inds{c} = find(contains(lower(objConds),{'hob1','hob2'}));
+                     case 'HN'
+                         Inds{c} = find(contains(lower(objConds),{'hn1','hn2'}));
+                 end
             end
         end
     end
