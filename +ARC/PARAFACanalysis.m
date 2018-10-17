@@ -1,8 +1,7 @@
 function PARAFACanalysis(ProjectPath,varargin)
+% Apply PARAFAC on the RES data ..
 
 opt = ParseArgs(varargin,...
-    'EpochLen'   ,2500,...
-    'Overlap'    ,1250,...
     'FreqBand'  ,[5 15],...
     'Space'      ,'Electrode',...
     'Conditions' ,[],...
@@ -10,10 +9,6 @@ opt = ParseArgs(varargin,...
     'SubjectSelect' ,[],...
     'ResultsPath'   ,[]...
         );
-    
-EpLen = opt.EpochLen; % Epoch length
-MovWin = opt.Overlap;%Ovelpa of the moving window
-addpath(genpath('C:\Users\ebarzega\Documents\My Works\TOOL\CSDtoolbox'));
 
 if isempty(opt.Subjectinfo)
     load('+ARC\Private\Subjectinfo.mat');
@@ -24,24 +19,16 @@ if isempty(opt.SubjectSelect)% select the first recordings of all subjects
     opt.SubjectSelect = find([SubjectData(:).Longitude]==0);
 end
 
-%% Read files and calculate spectrums and save them as RES class
-if ~exist(fullfile(ProjectPath ,'FFTData'),'dir')
-    mkdir(fullfile(ProjectPath ,'FFTData'));
-end
+%% Read RES class
 for S = 1:numel(opt.SubjectSelect)
     sub = opt.SubjectSelect(S);
     display([SubjectData(sub).SubID]);
     temp = ARC.RES();
     if isempty(temp.loadRES(fullfile(ProjectPath ,'FFTData'),SubjectData(sub)))
-        [RESdata] = RawEEGtoRES(ProjectPath,SubjectData(sub),opt.EpochLen ,opt.Overlap ,opt.FreqBand(2),opt.FreqBand(1));
-        RESdata.saveRES(fullfile(ProjectPath ,'FFTData'));
+        error('RES class for subject not found, please run ARC.Spectrumanalysis first');
     else
-        RESdata = temp.loadRES(fullfile(ProjectPath ,'FFTData'),SubjectData(sub));
+        RESdata{S} = temp.loadRES(fullfile(ProjectPath ,'FFTData'),SubjectData(sub));
     end
-    if ~exist(fullfile(opt.ResultsPath,'Specrum'),'dir')
-        mkdir(fullfile(opt.ResultsPath,'Specrum'));
-    end
-    RESdata.PlotSpectrum('SavePath',fullfile(opt.ResultsPath,'Specrum'));
-end
 
+end
 end

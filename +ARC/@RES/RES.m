@@ -111,13 +111,16 @@ classdef RES
                 'Normalize'     ,1,...
                 'FreqBand'      ,[min(obj.Freq) max(obj.Freq)],...
                 'Electrodes'    ,[15 17 24 28 25 27 54 57 30 31],...
-                'Conditions'    ,{'REC','Plast','HSMT'},...
+                'Conditions'    ,[],...
                 'Colors'        ,[],...
                 'SavePath'      ,[]...
                 );
             
             % Condition list and default conditions
             CondList = {'REC','REC1','REC2','REC-Plast','REC3','REC-HSMT','REC4','REC-HN','REO','Plast','HSMT','HN'};
+            if isempty(opt.Conditions)
+                opt.Conditions = {'REC','Plast','HSMT'};
+            end
             if ~prod(ismember(opt.Conditions,CondList))
                 error('Undefined Conditions for plotting');
             end
@@ -163,7 +166,7 @@ classdef RES
             if opt.Normalize
                 Specall = cat(3,Spec{:});
                 Ind =(obj.Freq>=opt.FreqBand(1)).*(obj.Freq<=opt.FreqBand(2));
-                Specall = Specall(:,Ind==1,:);
+                Specall = Specall(opt.Electrodes,Ind==1,:);
                 MYaxis = max(Specall(:))*1.1;
             end
             
@@ -186,7 +189,7 @@ classdef RES
                     ylim([0 MYaxis]);
                 end
                 if sp == 2
-                    L = legend(opt.Conditions);
+                    L = legend(opt.Conditions(cellfun(@(x) ~isempty(x),Spec)));
                     set(L,'Position',get(L,'Position')+[.05 .05 0 0]);
                 end
                 
@@ -204,6 +207,7 @@ classdef RES
                 EName = [obj.Elabels{opt.Electrodes}];
                 CName = [opt.Conditions{:}];
                 print(fullfile(opt.SavePath,['EEGSPectrum_' obj.SubjectInfo.SubID '_RecordNum' num2str(obj.SubjectInfo.Longitude+1) '_' EName '_' CName '.tif']),'-r300','-dtiff');
+                
             end
         end
     end
