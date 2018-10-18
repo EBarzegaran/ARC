@@ -191,6 +191,7 @@ classdef RES
             end
         end
         
+        %% Condition search functions
         function Inds = FindConditions(obj,Conditions)
             % find the index of obj.FFTData with specified conditions
             % INPUT: Conditions is a cell array of strings indicating
@@ -220,6 +221,32 @@ classdef RES
                      case 'HN'
                          Inds{c} = find(contains(lower(objConds),{'hn1','hn2'}));
                  end
+            end
+        end
+        
+        function CondNames = GetCondNames(obj,Ind)
+            for i = 1:numel(Ind)
+                CName = obj.FFTData(Ind(i)).Condition;
+                switch lower(CName)
+                    case 'rec'
+                       CondNames{i} = 'REC1';
+                    case 'reo'
+                       CondNames{i} = 'REO'; 
+                    case 'rec-mu'
+                       CondNames{i} = 'REC2'; 
+                    case 'plast'
+                        CondNames{i} = 'Plast';
+                    case {'hob1','hob2'}
+                        CondNames{i} = 'HSMT'; 
+                    case 'rec-hob'
+                        CondNames{i} = 'REC3'; 
+                    case {'hn1','hn2'}
+                        CondNames{i} = 'HN'; 
+                    case {'rec-hn'}
+                        CondNames{i} = 'REC4'; 
+                    otherwise 
+                        CondNames{i} = []; 
+                end
             end
         end
     end

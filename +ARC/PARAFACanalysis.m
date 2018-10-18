@@ -34,6 +34,6 @@ for S = 1:numel(opt.SubjectSelect)
     end
 
     Model = ResParafac(RESdata{S},'FreqBand',opt.FreqBand,'Conditions',opt.Conditions,...
-        'Corconia',opt.Corcondia,'VarianceMode',opt.VarianceMode);
+        'Electrodes',opt.Electrodes,'Corconia',opt.Corcondia,'VarianceMode',opt.VarianceMode);
 end
 end
