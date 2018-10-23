@@ -6,19 +6,21 @@ opt = ParseArgs(varargin,...
     'Conditions'    ,[],...
     'Electrodes'    ,[],...
     'Corcondia'     , false,...
-    'VarianceMode'  , 'spatial'...
+    'VarianceMode'  , 'spatial',...
+    'FixedFreqLoading', false,...
+    'FixedModel'      ,[]...
     );
 %% default values
 if isempty(opt.Conditions)
     opt.Conditions = 'REC';
 end
 if isempty(opt.Electrodes)
-    opt.Electrodes = 1:numel(RESdata.Elabels);
+    opt.Electrodes = 1:min(numel(RESdata.Elabels),64);
 end
 
 %% Select the conditions
 CondInd = RESdata.FindConditions(opt.Conditions);
-CondInd = unique(cat(1,CondInd{:}));
+CondInd = unique(cat(2,CondInd{:}));
 
 FFTData = RESdata.FFTData(CondInd);
 InpData = cat(3,FFTData(:).Data);
@@ -39,14 +41,29 @@ else
 end
 
 %% Apply Parafac
-
+if opt.FixedFreqLoading
+    MM = opt.FixedModel.Model;
+    MM{1} = abs(rand(size(InpData,1),NumCom));
+    MM{3} = abs(rand(size(InpData,3),NumCom));
+end
 if strcmpi(opt.VarianceMode,'temporal')
-    model = parafac(permute(InpData,[3 2 1]),NumCom,[0 0 0],[2 2 2]);
+    if opt.FixedFreqLoading
+        model = parafac(permute(InpData,[3 2 1]),NumCom,[0 0 0],[2 2 2],MM([3 2 1]),[0 1 0]);
+    else
+        model = parafac(permute(InpData,[3 2 1]),NumCom,[0 0 0],[2 2 2]);
+    end
     model = model([3 2 1]);
 elseif strcmpi(opt.VarianceMode,'spatial')
-    model =  parafac(InpData,NumCom,[0 0 0],[2 2 2]);
+    if opt.FixedFreqLoading
+        model = parafac(InpData,NumCom,[0 0 0],[2 2 2],MM,[0 1 0]);
+    else
+        model =  parafac(InpData,NumCom,[0 0 0],[2 2 2]);
+    end
 end
 
-PFresult = ARC.PFModel(RESdata.SubjectInfo, model,{'Spatial','Frequency','Temporal'},...
+PFresult = ARC.PFModel(RESdata.SubjectInfo, model,{'Spatial','Frequency','Temporal'},opt.VarianceMode,...
     RESdata.Freq(FreqInd),RESdata.Elabels(opt.Electrodes),CondNames, CondLength);
+
+PFresult =PFresult.OrganizeARCs(); % check the order of ARC1 and ARC2
+
 end

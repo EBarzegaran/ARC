@@ -47,6 +47,9 @@ function [RESdata] = RawEEGtoRES(ProjectPath,SubjectInfo, EpLen, MovWin ,HF,LF)
             end
         end
     end
+    if numel(DATA.label)>64
+        DATA.label = DATA.label(1:64);
+    end
 RESdata = ARC.RES(SubjectInfo,FData,CondNames,EpLen,MovWin,Freq,DATA.label);
 end
 

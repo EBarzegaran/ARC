@@ -23,7 +23,11 @@ classdef FData
         end
         
         function value = get.Epochs(obj)
-            value = size(obj.Data,3);
+            if ~isempty(obj.Data)
+                value = size(obj.Data,3);
+            else
+                value = 0;
+            end
         end
     end
 end

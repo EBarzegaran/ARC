@@ -81,7 +81,6 @@ classdef RES
                 else
                     obj=[];
                 end
-
         end
         
         %% Visualization function
