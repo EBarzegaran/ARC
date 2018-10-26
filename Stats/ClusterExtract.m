@@ -1,4 +1,4 @@
-function Clusters = ClusterExtract(P,SupraTh,Stat,A)
+function Clusters = ClusterExtract(P,SupraTh,Stat,df,A)
 % Extract clusters for cluster-based permutation test
 % Inputs: 
     % P: is a Nx1 matrix consist of P values of statistical test

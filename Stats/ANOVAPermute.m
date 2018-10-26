@@ -1,4 +1,4 @@
-function Clusters = ANOVAPermute(Data,A,PermNum,SupraTh)
+function StatResults = ANOVAPermute(Data,A,PermNum,SupraTh)
     % This function runs a cluster based permuation test for within-subject
     % repeated measures ANOVA or paired TTEST
     % INPUT:
@@ -43,7 +43,8 @@ function Clusters = ANOVAPermute(Data,A,PermNum,SupraTh)
                 P = cellfun(@(x) x(strcmpi(stats{1}(:,1),Factors{fac}),strcmpi(stats{1}(1,:),'P')),stats);P = [P{:}];
                 F = cellfun(@(x) x(strcmpi(stats{1}(:,1),Factors{fac}),strcmpi(stats{1}(1,:),'F')),stats);F = [F{:}];
                 df = cellfun(@(x) x(strcmpi(stats{1}(:,1),Factors{fac}),strcmpi(stats{1}(1,:),'df')),stats);df = [df{:}];
-                Clusters{perm,fac} = ClusterExtract(P,SupraTh,F,A);
+                Clusters{perm,fac} = ClusterExtract(P,SupraTh,F,df,A);
+                P1{fac} = P; F1{fac} = F; df1{fac} = df;
             end
         else
             for fac = 1:3 % permuting data for each factor and interaction
@@ -61,7 +62,7 @@ function Clusters = ANOVAPermute(Data,A,PermNum,SupraTh)
                 if ~exist('Fac2p','var'), Fac2p = Fac2;end    
                 % permutation for interaction should be tested later... The
                 % best way would be to test interactions on residuals, to
-                % avoid the main effects
+                % avoid the main effects : check fitlm stuff
                 % Check it here: http://www.uvm.edu/~dhowell/StatPages/Permutation%20Anova/PermTestsAnova.html
                 
                 % calculate ANOVA
@@ -73,11 +74,25 @@ function Clusters = ANOVAPermute(Data,A,PermNum,SupraTh)
                 P = cellfun(@(x) x(strcmpi(stats{1}(:,1),Factors{fac}),strcmpi(stats{1}(1,:),'P')),stats);P = [P{:}];
                 F = cellfun(@(x) x(strcmpi(stats{1}(:,1),Factors{fac}),strcmpi(stats{1}(1,:),'F')),stats);F = [F{:}];
                 df = cellfun(@(x) x(strcmpi(stats{1}(:,1),Factors{fac}),strcmpi(stats{1}(1,:),'df')),stats);df = [df{:}];
-                C = ClusterExtract(P,SupraTh,F,A);
+                C = ClusterExtract(P,SupraTh,F,df,A);
                 Clusters{perm,fac} = C(1); % only the largest cluster
             end
         end
     end
 %% make the random distribution and calculate p-vlues for clusters    
+    Randdists =arrayfun(@(y) arrayfun(@(x) [Clusters{x,y}.SStat],2:PermNum+1),1:3,'uni',false);
     
+    for fac = 1:3
+        results.Factor = Factors{fac};
+        results.Uncorrected.F = F1{fac};
+        results.Uncorrected.P = P1{fac};
+        results.Uncorrected.df = df1{fac};
+        
+        SStat = {Clusters{1,fac}.SStat};
+        Pvalue = arrayfun(@(x) {sum(SStat{x}<Randdists{fac})/PermNum},1:numel(SStat));
+        Nodes = {Clusters{1,fac}.Nodes};
+        clusts = struct('SStat',SStat,'Pvalue',Pvalue,'Nodes',Nodes);
+        results.Clusters = clusts;
+        StatResults{fac} = results;
+    end
 end
