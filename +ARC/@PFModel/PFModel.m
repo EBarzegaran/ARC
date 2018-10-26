@@ -1,5 +1,5 @@
 classdef PFModel
-    
+    % a class to store the output of PARAFAC analysis
     properties
         SubjectInfo
         Model
@@ -189,5 +189,17 @@ classdef PFModel
             Comp = Comp(Order);
             obj.SubjectInfo.Comp = Comp;
         end
+        
+        function Loading = GetLoading(obj,Comp,Mode)
+            % Returns the loading of component #Comp with the Mode
+            % Mode: 'spatial'/['frequency']/'temporal';
+            if ~exist('Mode','var')
+                Mode = 'frequency';
+            end
+            obj = obj.OrganizeARCs;
+            objComp = obj.SubjectInfo.Comp; objComp(objComp==0)=[];
+            Loading = obj.Model{strcmpi(obj.Modes,Mode)}(:,objComp);
+            Loading = Loading(:,Comp);
+        end   
     end
 end

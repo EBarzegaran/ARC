@@ -15,7 +15,7 @@ V = importdata('elec_2D.txt');
 V.data(BadEl,:)=[];V.textdata(BadEl)=[];
 Data(BadEl)=[];
 numEL=62;
-Dis1 = sqrt(sum((permute(repmat(V.data,[1 1 numEL]),[1 3 2])-permute(repmat(V.data,[1 1 numEL]),[3 1 2])).^2,3));
+%Dis1 = sqrt(sum((permute(repmat(V.data,[1 1 numEL]),[1 3 2])-permute(repmat(V.data,[1 1 numEL]),[3 1 2])).^2,3));
 x = V.data(:,1);y = -V.data(:,2);%z=V.data(:,3);
 tri=delaunay(x,y);
 XX = ones(numel(x),3)*.9; 
