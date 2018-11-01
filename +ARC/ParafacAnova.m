@@ -28,8 +28,8 @@ ASDmat = arrayfun(@(x) cat(3,ASD(x,:)), 1:size(ASD,1),'uni',false);
 ASDmat = cellfun(@(x) cat(3,x{:}),ASDmat,'uni',false );ASDmat = cat(4,ASDmat{:});
 A = ElectrodeNeighbors();
 
-Clusters = ANOVAPermute(permute(ASDmat,[4 1 2 3]),A,100,.05);
-%%
+StatResults = RmAnovaPermute(permute(ASDmat,[4 1 2 3]),A,500,.01,'TFCE');
+%
 end
 
 

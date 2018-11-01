@@ -1,5 +1,5 @@
-function StatResults = ANOVAPermute(Data,A,PermNum,SupraTh)
-    % This function runs a cluster based permuation test for within-subject
+function StatResults = RmAnovaPermute(Data,A,PermNum,SupraTh,StatType)
+    % This function runs a cluster based permuation test for
     % repeated measures ANOVA or paired TTEST
     % INPUT:
         % Data: Subjects X Electrodes(Time or Source) X Factor1 X Factor2  is
@@ -12,6 +12,10 @@ function StatResults = ANOVAPermute(Data,A,PermNum,SupraTh)
         % permnum: is the number of permutations, minimum 1000 permutations
                 % is recommended
                 
+        % SupraTh: P-value Threshold for extracting clusters
+           
+        %StatType: ['mass']/'size'/'height'/'TFCE': check: Pernet, C. R., et al. "Cluster-based computational methods for mass univariate analyses of event-related brain potentials/fields: A simulation study." Journal of Neuroscience Methods 250 (2015): 85-93. 
+                
    % Author: Elham Barzegaran, 10/2018
    %% default values
    if ~exist('PermNum','var') || isempty(PermNum)
@@ -22,7 +26,10 @@ function StatResults = ANOVAPermute(Data,A,PermNum,SupraTh)
        SupraTh = .05;
    end
    
-   %% Prepare the data structure and teh grouping labels
+   if ~exist('StatType','var')
+       StatType = 'mass';
+   end
+   %% Prepare the data structure and the grouping labels
     Y = squeeze(Data(:,1,:,:));
     SubID = repmat((1:size(Y,1))',[1 size(Y,2) size(Y,3)]);
     Fac1 = permute(repmat((1:size(Y,2))',[1 size(Y,1) size(Y,3)]),[2 1 3]);% ARC
@@ -42,9 +49,11 @@ function StatResults = ANOVAPermute(Data,A,PermNum,SupraTh)
             for fac = 1:3
                 P = cellfun(@(x) x(strcmpi(stats{1}(:,1),Factors{fac}),strcmpi(stats{1}(1,:),'P')),stats);P = [P{:}];
                 F = cellfun(@(x) x(strcmpi(stats{1}(:,1),Factors{fac}),strcmpi(stats{1}(1,:),'F')),stats);F = [F{:}];
-                df = cellfun(@(x) x(strcmpi(stats{1}(:,1),Factors{fac}),strcmpi(stats{1}(1,:),'df')),stats);df = [df{:}];
-                Clusters{perm,fac} = ClusterExtract(P,SupraTh,F,df,A);
-                P1{fac} = P; F1{fac} = F; df1{fac} = df;
+                v1 = cellfun(@(x) x(strcmpi(stats{1}(:,1),Factors{fac}),strcmpi(stats{1}(1,:),'df')),stats);v1 = [v1{:}];
+                v2 = cellfun(@(x) x(strcmpi(stats{1}(:,1),[Factors{fac} ' x Subj']),strcmpi(stats{1}(1,:),'df')),stats);v2 = [v2{:}];
+                BaseF = finv(1-SupraTh,v1(1),v2(1)); % sprathreshold Fstat
+                Clusters{perm,fac} = ClusterExtract(P,SupraTh,F,BaseF,A,StatType);
+                P1{fac} = P; F1{fac} = F; df1{fac} = [v1; v2];
             end
         else
             for fac = 1:3 % permuting data for each factor and interaction
@@ -61,8 +70,9 @@ function StatResults = ANOVAPermute(Data,A,PermNum,SupraTh)
                 if ~exist('Fac1p','var'), Fac1p = Fac1;end
                 if ~exist('Fac2p','var'), Fac2p = Fac2;end    
                 % permutation for interaction should be tested later... The
-                % best way would be to test interactions on residuals, to
-                % avoid the main effects : check fitlm stuff
+                % best way would be to test interactions on residuals of 
+                % the linear model with formula FACTOR1 + FACTOR2 to avoid 
+                % the main effects : check fitlm stuff
                 % Check it here: http://www.uvm.edu/~dhowell/StatPages/Permutation%20Anova/PermTestsAnova.html
                 
                 % calculate ANOVA
@@ -73,8 +83,10 @@ function StatResults = ANOVAPermute(Data,A,PermNum,SupraTh)
                 % extract cluster statistics
                 P = cellfun(@(x) x(strcmpi(stats{1}(:,1),Factors{fac}),strcmpi(stats{1}(1,:),'P')),stats);P = [P{:}];
                 F = cellfun(@(x) x(strcmpi(stats{1}(:,1),Factors{fac}),strcmpi(stats{1}(1,:),'F')),stats);F = [F{:}];
-                df = cellfun(@(x) x(strcmpi(stats{1}(:,1),Factors{fac}),strcmpi(stats{1}(1,:),'df')),stats);df = [df{:}];
-                C = ClusterExtract(P,SupraTh,F,df,A);
+                v1 = cellfun(@(x) x(strcmpi(stats{1}(:,1),Factors{fac}),strcmpi(stats{1}(1,:),'df')),stats);v1 = [v1{:}];
+                v2 = cellfun(@(x) x(strcmpi(stats{1}(:,1),[Factors{fac} ' x Subj']),strcmpi(stats{1}(1,:),'df')),stats);v2 = [v2{:}];
+                BaseF = finv(1-SupraTh,v1(1),v2(1)); % sprathreshold Fstat
+                C = ClusterExtract(P,SupraTh,F,BaseF,A,StatType);
                 Clusters{perm,fac} = C(1); % only the largest cluster
             end
         end
