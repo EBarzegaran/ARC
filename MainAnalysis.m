@@ -4,11 +4,12 @@ ProjectPath = 'C:\Users\Elhamkhanom\Documents\My works\LongtermProject\ARCProjec
 addpath(genpath('C:\Users\Elhamkhanom\Documents\Codes\Git\ARC\'));
 ResultsPath = 'C:\Users\Elhamkhanom\Documents\My works\LongtermProject\ARCProject\Results';
 specanalysis = false;
-pfanalysis = false;
+pfanalysis = true;
 
 %% Select the subset of subject for group level analysis
 %SubIDs= [1;3;4;8;9;12;13;16;17;19;21;22;23;27;29;32;34;37;38;44;47;48;52;61;65;66;70;72;78;]; %these are the subject with REC and HO and Plast
-SubIDs= [1;3;4;8;9;12;13;16;17;19;21;22;23;27;29;32;37;38;44;47;48;61;65;66;70;72;78;]; %these are the subject with REC and HO and Plast
+%SubIDs= [1;3;4;8;9;12;13;16;17;19;21;22;23;27;29;32;37;38;44;47;48;61;65;66;70;72;78;]; %these are the subject with REC and HO and Plast
+SubIDs= [1;3;4;8;9;12;13;16;17;19;21;22;23;27;29;32;37;38;44;47;48;61;66;72;78;]; %these are the subject with REC and HO and Plast
 SubIDs = arrayfun(@(x) ['ss-' num2str(x)],SubIDs,'uni',false);
 load('Subjectinfo.mat');
 SubIndex = find(ismember({SubjectData.SubID},SubIDs).*([SubjectData.Longitude]==0));

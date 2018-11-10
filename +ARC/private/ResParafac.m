@@ -24,7 +24,7 @@ CondInd = RESdata.FindConditions(opt.Conditions);
 CondInd = unique(cat(2,CondInd{:}));
 
 FFTData = RESdata.FFTData(CondInd);
-InpData = cat(3,FFTData(:).Data);
+InpData = sqrt(cat(3,FFTData(:).Data));% FFTData is in fact the PSD, but the ASD is used here
 
 FreqInd = (RESdata.Freq>=opt.FreqBand(1) & RESdata.Freq<=opt.FreqBand(2));
 InpData = InpData(opt.Electrodes,FreqInd,:);
