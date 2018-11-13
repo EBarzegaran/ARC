@@ -1,4 +1,4 @@
-function ParafacAnova(ModelPath,SubInfo,varargin)
+function Results = ParafacAnova(ModelPath,SubInfo,varargin)
 
 %% Parse input and assign default values
 opt = ParseArgs(varargin,...
@@ -28,19 +28,38 @@ ASDmat = arrayfun(@(x) cat(3,ASD(x,:)), 1:size(ASD,1),'uni',false);
 ASDmat = cellfun(@(x) cat(3,x{:}),ASDmat,'uni',false );ASDmat = cat(4,ASDmat{:});
 A = ElectrodeNeighbors();
 
-StatResults = RmAnovaPermute(permute(ASDmat,[4 1 2 3]),A,100,.01,'mass');
+StatResults = RmAnovaPermute(permute(ASDmat,[4 1 2 3]),A,1000,.01,'mass');
+
+%% save the result
+Results = []; 
+Results.StatResults = StatResults;
+Results.SubjectInfo = SubInfo;
+Results.Conditions = opt.ModelNames;
+Results.VarianceMode = opt.VarianceMode;
+if ~exist(fullfile(opt.ResultsPath,'GroupLevel'),'dir')
+    mkdir(fullfile(opt.ResultsPath,'GroupLevel'));
+end
+FileName = ['GroupLevelANOVA_' [Results.Conditions{:}] '_Var' Results.VarianceMode '_' num2str(numel(Results.SubjectInfo)) 'Subs'];
+save(fullfile(opt.ResultsPath,'GroupLevel',[FileName '.mat']),'Results');
+
 %% plot the ANOVA results
 FacNames = {'ARC','Condition','ARC X Condition'};
+Fhandler = figure;
 for i = 1:numel(StatResults)
     % Mark the significant clusters
     SC = [StatResults{i}.Clusters.Pvalue]<0.05;
     SN = [StatResults{i}.Clusters(SC).Nodes];
     %
-    subplot(1,3,i),ARC.Electrode_visulaization(StatResults{i}.Uncorrected.F',0,'hotcortex',SN); axis tight
-    colorbar;
+    S = subplot(1,3,i),ARC.Electrode_visulaization(StatResults{i}.Uncorrected.F',0,'hotcortex',SN); axis tight
+    CB = colorbar;
+    CB.Position = CB.Position - [0 0 .0 -0.00];
+    set(get(CB,'title'),'string','F-Stats')
     title(FacNames{i});
 end
 
+set(Fhandler,'PaperPositionMode','manual');
+set(Fhandler,'PaperPosition',[.25 .25 12 3.5]);
+print(fullfile(opt.ResultsPath,'GroupLevel',[FileName '.tif']),'-dtiff','-r300');
 end
 
 

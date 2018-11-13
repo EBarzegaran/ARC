@@ -49,7 +49,7 @@ hold on;
 if ~isempty(eleclist)
     Elecs = zeros(1,64);Elecs(eleclist)=1;Elecs = Elecs==1;
     Elecs(BadEl)=[];
-    scatter(y(Elecs),x(Elecs),'c','filled','linewidth',1); 
+    scatter(y(Elecs),x(Elecs),20,'b','linewidth',2,'Marker','o'); 
 end
 % load Cental_electrode.mat;EL = 1:64;EL(BadEl)=[];[E,I] = intersect (EL,Central_elec2);
 % scatter(y(I),x(I),80,'r','filled'); 
