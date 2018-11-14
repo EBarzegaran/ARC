@@ -50,9 +50,10 @@ for i = 1:numel(StatResults)
     SC = [StatResults{i}.Clusters.Pvalue]<0.05;
     SN = [StatResults{i}.Clusters(SC).Nodes];
     %
-    S = subplot(1,3,i),ARC.Electrode_visulaization(StatResults{i}.Uncorrected.F',0,'hotcortex',SN); axis tight
+    S = subplot(1,3,i);
+    ARC.Electrode_visulaization(StatResults{i}.Uncorrected.F',0,'hotcortex',SN); axis tight
     CB = colorbar;
-    CB.Position = CB.Position - [0 0 .0 -0.00];
+    CBP = CB.Position; CBP(3) = .03; CB.Position = CBP;
     set(get(CB,'title'),'string','F-Stats')
     title(FacNames{i});
 end
