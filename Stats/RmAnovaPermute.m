@@ -69,15 +69,18 @@ function StatResults = RmAnovaPermute(Data,A,PermNum,SupraTh,StatType)
                 end
                 if ~exist('Fac1p','var'), Fac1p = Fac1;end
                 if ~exist('Fac2p','var'), Fac2p = Fac2;end    
-                % permutation for interaction should be tested later... The
-                % best way would be to test interactions on residuals of 
-                % the linear model with formula FACTOR1 + FACTOR2 to avoid 
-                % the main effects : check fitlm stuff
+                % permutation for interaction...
+                % The best way is to test interactions on residuals of 
+                % the linear model with formula FACTOR1 + FACTOR2 to avoid biases due to 
+                % the main effects :
                 % Check it here: http://www.uvm.edu/~dhowell/StatPages/Permutation%20Anova/PermTestsAnova.html
                 
                 % calculate ANOVA
                 for El = 1:size(Data,2)
                     Y = squeeze(Data(:,El,:,:));
+                    if fac==3
+                        Y = Y-repmat(mean(Y),size(Y,1),1,1);% remove the factor means
+                    end
                     stats{El} = rm_anova2(Y(:),SubID(:),Fac1p(:),Fac2p(:),Factors(1:2));
                 end
                 % extract cluster statistics

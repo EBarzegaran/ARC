@@ -50,4 +50,3 @@ ModelPath = fullfile(ResultsPath,['PARAFAC_' 'Electrode']);
 ARC.ParafacAnova(ModelPath,SubjectData(SubIndex),'FileNames',FileNames,'ModelNames',ModelNames,'ResultsPath',ResultsPath);
 
 
-

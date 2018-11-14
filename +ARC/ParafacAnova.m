@@ -28,7 +28,7 @@ ASDmat = arrayfun(@(x) cat(3,ASD(x,:)), 1:size(ASD,1),'uni',false);
 ASDmat = cellfun(@(x) cat(3,x{:}),ASDmat,'uni',false );ASDmat = cat(4,ASDmat{:});
 A = ElectrodeNeighbors();
 
-StatResults = RmAnovaPermute(permute(ASDmat,[4 1 2 3]),A,1000,.01,'mass');
+StatResults = RmAnovaPermute(permute(ASDmat,[4 1 2 3]),A,100,.01,'mass');
 
 %% save the result
 Results = []; 
@@ -52,15 +52,26 @@ for i = 1:numel(StatResults)
     %
     S = subplot(1,3,i);
     ARC.Electrode_visulaization(StatResults{i}.Uncorrected.F',0,'hotcortex',SN); axis tight
+    mt = 0;%floor(min(StatResults{i}.Uncorrected.F));
+    Mt = ceil(max(StatResults{i}.Uncorrected.F));
+    caxis([mt Mt]);
+    
     CB = colorbar;
-    CBP = CB.Position; CBP(3) = .03; CB.Position = CBP;
     set(get(CB,'title'),'string','F-Stats')
+    CB.Ticks = mt:round((Mt-mt)/4):Mt;
+    
     title(FacNames{i});
+    set(S,'position',get(S,'position')+[-.05 -.05 .1 .1]);
+    
 end
 
 set(Fhandler,'PaperPositionMode','manual');
-set(Fhandler,'PaperPosition',[.25 .25 12 3.5]);
+set(Fhandler,'PaperPosition',[.25 .25 11 4]);
 print(fullfile(opt.ResultsPath,'GroupLevel',[FileName '.tif']),'-dtiff','-r300');
+
+%% Conduct post-hoc analysis
+PHStatResults  = RmAnovaPostHoc(permute(ASDmat,[4 1 2 3]),StatResults);
+Results.StatResults  = PHStatResults;
 end
 
 
