@@ -30,9 +30,13 @@ A = ElectrodeNeighbors();
 
 StatResults = RmAnovaPermute(permute(ASDmat,[4 1 2 3]),A,100,.01,'mass');
 
+
+%% Conduct post-hoc analysis
+PHStatResults  = RmAnovaPostHoc(permute(ASDmat,[4 1 2 3]),StatResults);
+Results.StatResults  = PHStatResults;
+
 %% save the result
 Results = []; 
-Results.StatResults = StatResults;
 Results.SubjectInfo = SubInfo;
 Results.Conditions = opt.ModelNames;
 Results.VarianceMode = opt.VarianceMode;
@@ -68,10 +72,64 @@ end
 set(Fhandler,'PaperPositionMode','manual');
 set(Fhandler,'PaperPosition',[.25 .25 11 4]);
 print(fullfile(opt.ResultsPath,'GroupLevel',[FileName '.tif']),'-dtiff','-r300');
+close;
+%% plot the post-hoc results
+levelNames{2} = opt.ModelNames;
+levelNames{1} = {'ARC1','ARC2'};
+for i = 1:numel(PHStatResults)
+    FIG = figure;
+    switch i
+        case {1,2}
+            Elecs = PHStatResults{i}.Clusters.Nodes;
+            PHresults = PHStatResults{i}.Clusters.PostHoc;
+            for ph = 1:numel(PHresults)
+                Elec_F = zeros(64,1);
+                Elec_F(Elecs) = PHresults(ph).F;
+                SN = Elecs(PHresults(ph).P<(.01));
+                SP = subplot(1,numel(PHresults),ph);
+                [~,M1] = min(PHresults(ph).mean);%smaller level
+                [~,M2] = max(PHresults(ph).mean);% larger level
+                ARC.Electrode_visulaization(Elec_F,0,'hotcortex',SN);axis tight
+                title([levelNames{PHresults(ph).factor}{PHresults(ph).levels(M2)} '>' levelNames{PHresults(ph).factor}{PHresults(ph).levels(M1)}]);
+                caxis([0 max([PHresults.F])])
+                %colorbar;
+                set(SP,'position',get(SP,'position')+[-.005 -.005 .01 .01]);
+            end
+            set(FIG,'PaperPositionMode','manual');
+            set(FIG,'PaperPosition',[1 1 4*numel(PHresults) 4]);
+            
+        case 3
+            Elecs = PHStatResults{i}.Clusters.Nodes;
+            PHresults = PHStatResults{i}.Clusters.PostHoc;
+            % xaxis -> factor2
+            % yaxis -> mean+SEM
+            % two lines for factor 1
+            ARC1M = [PHresults(1).mean PHresults(2).mean(2)];
+            ARC1SEM = [PHresults(1).SEM PHresults(2).SEM(2)];
 
-%% Conduct post-hoc analysis
-PHStatResults  = RmAnovaPostHoc(permute(ASDmat,[4 1 2 3]),StatResults);
-Results.StatResults  = PHStatResults;
+            ARC2M = [PHresults(4).mean PHresults(5).mean(2)];
+            ARC2SEM = [PHresults(4).SEM PHresults(5).SEM(2)];
+            
+            FOIG = figure;
+            hold on; p(1) = plot(1:3,ARC1M,'color',[0.1 .7 .1],'linewidth',2);
+            errorbar(1:3,ARC1M,ARC1SEM,'.','color',[0.1 .7 .1],'linewidth',2);
+            
+            hold on; p(2) = plot([1:3]+.02,ARC2M,'color',[0.7 .1 .1],'linewidth',2);
+            errorbar([1:3]+.02,ARC2M,ARC2SEM,'.','color',[0.7 .1 .1],'linewidth',2);
+            % plot significant lines 
+            
+            set(gca,'xtick',1:3,'xticklabels',levelNames{2})
+            xlim([.5 3.5])
+            ylim([.5 4.5])
+            ylabel('ASD')
+            legend(p,levelNames{1})
+            set(FIG,'PaperPosition',[1 1 7 3.5]);         
+    end
+    print(fullfile(opt.ResultsPath,'GroupLevel',['PostHoc_' FacNames{i} FileName '.tif']),'-dtiff','-r300');
+    close all;
+end
+%% combine the figures
+
 end
 
 

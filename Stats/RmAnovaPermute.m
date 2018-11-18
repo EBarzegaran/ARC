@@ -1,4 +1,4 @@
-function StatResults = RmAnovaPermute(Data,A,PermNum,SupraTh,StatType)
+function StatResults = RmAnovaPermute(Data,A,PermNum,SupraTh,StatType,Factors)
     % This function runs a cluster based permuation test for
     % repeated measures ANOVA or paired TTEST
     % INPUT:
@@ -15,6 +15,10 @@ function StatResults = RmAnovaPermute(Data,A,PermNum,SupraTh,StatType)
         % SupraTh: P-value Threshold for extracting clusters
            
         %StatType: ['mass']/'size'/'height'/'TFCE': check: Pernet, C. R., et al. "Cluster-based computational methods for mass univariate analyses of event-related brain potentials/fields: A simulation study." Journal of Neuroscience Methods 250 (2015): 85-93. 
+        
+        % factor: a vector indicates the factor which permutation anova should be
+                    % applied on: 1- fac1, 2-fac2, 3-fac1 x fac2, default
+                    % [1 2 3]
                 
    % Author: Elham Barzegaran, 10/2018
    %% default values
@@ -29,34 +33,44 @@ function StatResults = RmAnovaPermute(Data,A,PermNum,SupraTh,StatType)
    if ~exist('StatType','var')
        StatType = 'mass';
    end
+
+   if ~exist('Factors','var') || isempty(Factors)
+       Factors = 1:3;
+   else
+       if ~prod(ismember(Factors,1:3))
+           error('Factors should be a vector containing numbers 1 to 3, please refer to help')
+       end
+   end
    %% Prepare the data structure and the grouping labels
-    Y = squeeze(Data(:,1,:,:));
+    Y = zeros(size(Data,1),size(Data,3),size(Data,4));%squeeze(Data(:,1,:,:));
     SubID = repmat((1:size(Y,1))',[1 size(Y,2) size(Y,3)]);
     Fac1 = permute(repmat((1:size(Y,2))',[1 size(Y,1) size(Y,3)]),[2 1 3]);% ARC
     Fac2 = permute(repmat((1:size(Y,3))',[1 size(Y,2) size(Y,1)]),[3 2 1]);% cond
 
     %% cluster based-permuation test ANOVA 
-    Factors = {'fac1','fac2','fac1 x fac2'};
+    FactNames = {'fac1','fac2','fac1 x fac2'};
     for perm = 1: PermNum+1
         if mod(perm,20)==0,disp(num2str(perm));end
         if perm==1 % unpermuted data
             % Calculate ANOVA
             for El = 1:size(Data,2)
-                Y = squeeze(Data(:,El,:,:));
-                stats{El} = rm_anova2(Y(:),SubID(:),Fac1(:),Fac2(:),Factors(1:2));
+                Y = (Data(:,El,:,:));Y = reshape(Y,size(Data,1),size(Data,3),size(Data,4));
+                stats{El} = rm_anova2(Y(:),SubID(:),Fac1(:),Fac2(:),FactNames(1:2));
             end
             % extract cluster statistics
-            for fac = 1:3
-                P = cellfun(@(x) x(strcmpi(stats{1}(:,1),Factors{fac}),strcmpi(stats{1}(1,:),'P')),stats);P = [P{:}];
-                F = cellfun(@(x) x(strcmpi(stats{1}(:,1),Factors{fac}),strcmpi(stats{1}(1,:),'F')),stats);F = [F{:}];
-                v1 = cellfun(@(x) x(strcmpi(stats{1}(:,1),Factors{fac}),strcmpi(stats{1}(1,:),'df')),stats);v1 = [v1{:}];
-                v2 = cellfun(@(x) x(strcmpi(stats{1}(:,1),[Factors{fac} ' x Subj']),strcmpi(stats{1}(1,:),'df')),stats);v2 = [v2{:}];
+            for f = 1:numel(Factors)
+                fac = Factors(f);
+                P = cellfun(@(x) x(strcmpi(stats{1}(:,1),FactNames{fac}),strcmpi(stats{1}(1,:),'P')),stats);P = [P{:}];
+                F = cellfun(@(x) x(strcmpi(stats{1}(:,1),FactNames{fac}),strcmpi(stats{1}(1,:),'F')),stats);F = [F{:}];
+                v1 = cellfun(@(x) x(strcmpi(stats{1}(:,1),FactNames{fac}),strcmpi(stats{1}(1,:),'df')),stats);v1 = [v1{:}];
+                v2 = cellfun(@(x) x(strcmpi(stats{1}(:,1),[FactNames{fac} ' x Subj']),strcmpi(stats{1}(1,:),'df')),stats);v2 = [v2{:}];
                 BaseF = finv(1-SupraTh,v1(1),v2(1)); % sprathreshold Fstat
                 Clusters{perm,fac} = ClusterExtract(P,SupraTh,F,BaseF,A,StatType);
                 P1{fac} = P; F1{fac} = F; df1{fac} = [v1; v2];
             end
         else
-            for fac = 1:3 % permuting data for each factor and interaction
+            for f = 1:numel(Factors)% permuting data for each factor and interaction
+                fac = Factors(f);
                 % permute factor labels
                 clear Fac1p Fac2p;
                 switch fac
@@ -81,13 +95,13 @@ function StatResults = RmAnovaPermute(Data,A,PermNum,SupraTh,StatType)
                     if fac==3
                         Y = Y-repmat(mean(Y),size(Y,1),1,1);% remove the factor means
                     end
-                    stats{El} = rm_anova2(Y(:),SubID(:),Fac1p(:),Fac2p(:),Factors(1:2));
+                    stats{El} = rm_anova2(Y(:),SubID(:),Fac1p(:),Fac2p(:),FactNames(1:2));
                 end
                 % extract cluster statistics
-                P = cellfun(@(x) x(strcmpi(stats{1}(:,1),Factors{fac}),strcmpi(stats{1}(1,:),'P')),stats);P = [P{:}];
-                F = cellfun(@(x) x(strcmpi(stats{1}(:,1),Factors{fac}),strcmpi(stats{1}(1,:),'F')),stats);F = [F{:}];
-                v1 = cellfun(@(x) x(strcmpi(stats{1}(:,1),Factors{fac}),strcmpi(stats{1}(1,:),'df')),stats);v1 = [v1{:}];
-                v2 = cellfun(@(x) x(strcmpi(stats{1}(:,1),[Factors{fac} ' x Subj']),strcmpi(stats{1}(1,:),'df')),stats);v2 = [v2{:}];
+                P = cellfun(@(x) x(strcmpi(stats{1}(:,1),FactNames{fac}),strcmpi(stats{1}(1,:),'P')),stats);P = [P{:}];
+                F = cellfun(@(x) x(strcmpi(stats{1}(:,1),FactNames{fac}),strcmpi(stats{1}(1,:),'F')),stats);F = [F{:}];
+                v1 = cellfun(@(x) x(strcmpi(stats{1}(:,1),FactNames{fac}),strcmpi(stats{1}(1,:),'df')),stats);v1 = [v1{:}];
+                v2 = cellfun(@(x) x(strcmpi(stats{1}(:,1),[FactNames{fac} ' x Subj']),strcmpi(stats{1}(1,:),'df')),stats);v2 = [v2{:}];
                 BaseF = finv(1-SupraTh,v1(1),v2(1)); % sprathreshold Fstat
                 C = ClusterExtract(P,SupraTh,F,BaseF,A,StatType);
                 Clusters{perm,fac} = C(1); % only the largest cluster
@@ -95,19 +109,20 @@ function StatResults = RmAnovaPermute(Data,A,PermNum,SupraTh,StatType)
         end
     end
 %% make the random distribution and calculate p-vlues for clusters    
-    Randdists =arrayfun(@(y) arrayfun(@(x) [Clusters{x,y}.SStat],2:PermNum+1),1:3,'uni',false);
+    Randdists =arrayfun(@(y) arrayfun(@(x) [Clusters{x,y}.SStat],2:PermNum+1),Factors,'uni',false);
     
-    for fac = 1:3
-        results.Factor = Factors{fac};
+    for f = 1:numel(Factors)
+        fac = Factors(f);
+        results.Factor = FactNames{fac};
         results.Uncorrected.F = F1{fac};
         results.Uncorrected.P = P1{fac};
         results.Uncorrected.df = df1{fac};
         
         SStat = {Clusters{1,fac}.SStat};
-        Pvalue = arrayfun(@(x) {sum(SStat{x}<Randdists{fac})/PermNum},1:numel(SStat));
+        Pvalue = arrayfun(@(x) {sum(SStat{x}<Randdists{f})/PermNum},1:numel(SStat));
         Nodes = {Clusters{1,fac}.Nodes};
         clusts = struct('SStat',SStat,'Pvalue',Pvalue,'Nodes',Nodes);
         results.Clusters = clusts;
-        StatResults{fac} = results;
+        StatResults{f} = results;
     end
 end

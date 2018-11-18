@@ -45,7 +45,7 @@ for S = 1:numel(opt.SubjectSelect)
     if ~exist(fullfile(opt.ResultsPath,'Specrum'),'dir')
         mkdir(fullfile(opt.ResultsPath,'Specrum'));
     end
-    RESdata.PlotSpectrum('SavePath',fullfile(opt.ResultsPath,'Specrum'),'Conditions',opt.Conditions);
+    RESdata.PlotSpectrum('SavePath',fullfile(opt.ResultsPath,'Specrum'),'Conditions',opt.Conditions,'FreqBand',opt.FreqBand);
     close;
 end
 

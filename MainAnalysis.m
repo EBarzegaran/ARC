@@ -19,10 +19,12 @@ if specanalysis
     EpochLen = 2500;
     Overlap = 1250;
     FreqBand = [1 15];
-    ARC.Spectrumanalysis(ProjectPath ,'EpochLen' ,EpochLen ,'Overlap' ,Overlap , 'FreqBand', FreqBand,'RedoifExist',true,...
+    ARC.Spectrumanalysis(ProjectPath ,'EpochLen' ,EpochLen ,'Overlap' ,Overlap , 'FreqBand', FreqBand,'RedoifExist',false,...
          'ResultsPath','C:\Users\Elhamkhanom\Documents\My works\LongtermProject\ARCProject\Results');
 end
 
+% ARC.Spectrumanalysis(ProjectPath ,'FreqBand', [1 20],'Conditions',{'REC','REO'},'RedoifExist',true,...
+%          'ResultsPath','C:\Users\Elhamkhanom\Documents\My works\LongtermProject\ARCProject\Results');
 %% Sensor space PARAFAC
 % First Step: Calculate ARCs for REC conditions
 if pfanalysis
@@ -39,13 +41,12 @@ if pfanalysis
     ARC.PARAFACanalysis(ProjectPath ,'FreqBand', [5 15],'VarianceMode','temporal','SaveFigures',true,'Conditions','HSMT',...
         'Corcondia',false,'ResultsPath',ResultsPath,...
     'SubjectSelect',SubIndex, 'FixedFreqLoading', true, 'FixedModel','REC');
-
 end
 
 %% Group level analysis
 
-FileNames = {'REC1REC2REC3REC4','HSMTHSMT','Plast'};
-ModelNames = {'REC','HSMT','Plast'};
+FileNames = {'REC1REC2REC3REC4','Plast','HSMTHSMT'};
+ModelNames = {'REC','Plast','HSMT'};
 ModelPath = fullfile(ResultsPath,['PARAFAC_' 'Electrode']);
 ARC.ParafacAnova(ModelPath,SubjectData(SubIndex),'FileNames',FileNames,'ModelNames',ModelNames,'ResultsPath',ResultsPath);
 
