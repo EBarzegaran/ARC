@@ -12,8 +12,10 @@ opt = ParseArgs(varargin,...
     'Conditions' ,[],...
     'Subjectinfo'   ,[],...
     'SubjectSelect' ,[],...
-    'ResultsPath'   ,[],...
-    'RedoifExist'   ,false...
+    'FigurePath'   ,[],...
+    'RedoifExist'   ,false,...
+    'PlotResults'   ,true,...
+    'SavePath'      ,fullfile(ProjectPath ,'FFTData')... 
         );
     
 EpLen = opt.EpochLen; % Epoch length
@@ -36,17 +38,19 @@ for S = 1:numel(opt.SubjectSelect)
     sub = opt.SubjectSelect(S);
     display([SubjectData(sub).SubID]);
     temp = ARC.RES();
-    if isempty(temp.loadRES(fullfile(ProjectPath ,'FFTData'),SubjectData(sub))) || opt.RedoifExist
+    if isempty(temp.loadRES(opt.SavePath,SubjectData(sub))) || opt.RedoifExist
         [RESdata] = RawEEGtoRES(ProjectPath,SubjectData(sub),opt.EpochLen ,opt.Overlap ,opt.FreqBand(2),opt.FreqBand(1));
-        RESdata.saveRES(fullfile(ProjectPath ,'FFTData'));
+        RESdata.saveRES(opt.SavePath);
     else
-        RESdata = temp.loadRES(fullfile(ProjectPath ,'FFTData'),SubjectData(sub));
+        RESdata = temp.loadRES(opt.SavePath,SubjectData(sub));
     end
-    if ~exist(fullfile(opt.ResultsPath,'Specrum'),'dir')
-        mkdir(fullfile(opt.ResultsPath,'Specrum'));
+    if opt.PlotResults
+        if ~exist(fullfile(opt.FigurePath,'Specrum'),'dir')
+            mkdir(fullfile(opt.FigurePath,'Specrum'));
+        end
+        RESdata.PlotSpectrum('SavePath',fullfile(opt.FigurePath,'Specrum'),'Conditions',opt.Conditions,'FreqBand',opt.FreqBand);
+        close;
     end
-    RESdata.PlotSpectrum('SavePath',fullfile(opt.ResultsPath,'Specrum'),'Conditions',opt.Conditions,'FreqBand',opt.FreqBand);
-    close;
 end
 
 end
