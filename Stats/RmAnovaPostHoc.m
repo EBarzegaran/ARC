@@ -9,7 +9,7 @@ for f = 1:numel(StatResults) % for each main effect and interaction
     Stats = StatResults{f};
     for cl = 1:numel(Stats.Clusters) % for each cluster
         Num=1;
-        if Stats.Clusters(cl).Pvalue<0.05
+        if Stats.Clusters(cl).Pvalue<=0.05
             SE = Stats.Clusters(cl).Nodes;
             Y = squeeze(Data(:,SE,:,:));% should we correct for all electrodes or just the ones that survive?
             switch Stats.Factor 
@@ -69,7 +69,7 @@ for el = 1:size(y,2)
     Y2 = permute(Y,[ setdiff(1:ndims(Y),factornum+1) factornum+1]);% first dimension is subjects\
     Y2 = reshape(Y2,size(Y2,2)*size(Y2,1),size(Y2,3));
     results.mean = mean(Y2); % mean of data at different levels
-    results.SEM = std(Y2)/sqrt(size(Y2,2));% standard error of mean
+    results.SEM = std(Y2)/sqrt(size(Y2,1));% standard error of mean
     
     % prepare for anova
     varNames = arrayfun(@(x) ['y' num2str(x)],1:(size(Y,2)*size(Y,3)),'uni',false);

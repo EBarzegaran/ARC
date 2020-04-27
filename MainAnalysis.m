@@ -19,33 +19,61 @@ if specanalysis
     EpochLen = 2500;
     Overlap = 1250;
     FreqBand = [1 15];
-    ARC.Spectrumanalysis(ProjectPath ,'EpochLen' ,EpochLen ,'Overlap' ,Overlap , 'FreqBand', FreqBand,'RedoifExist',false,...
-        'FigurePath','C:\Users\Elhamkhanom\Documents\My works\LongtermProject\ARCProject\Results');
+    ARC.Spectrumanalysis(ProjectPath ,'EpochLen' ,EpochLen ,'Overlap' ,Overlap , 'FreqBand', FreqBand,'RedoifExist',true,...
+        'PlotResults',false,'Space','Source');
+    
+     ARC.Spectrumanalysis(ProjectPath ,'EpochLen' ,EpochLen ,'Overlap' ,Overlap , 'FreqBand', FreqBand,'RedoifExist',false,...
+        'FigurePath','C:\Users\Elhamkhanom\Documents\My works\LongtermProject\ARCProject\Results','Space','Electrode');
 end
 
 %% Sensor space PARAFAC
 % First Step: Calculate ARCs for REC conditions
 if pfanalysis
+    % SENSOR SPACE
     ARC.PARAFACanalysis(ProjectPath ,'FreqBand', [5 15],'VarianceMode','temporal','SaveFigures',true,'Conditions','REC',...
         'Corcondia',false,'ResultsPath','C:\Users\Elhamkhanom\Documents\My works\LongtermProject\ARCProject\Results',...
         'SubjectSelect',SubIndex);
-
-    % Second step: calculate ARCs for HSMT and Plast based on fixed frequency of REC condition loadings extracted from REC condition
-
+    
+    calculate ARCs for HSMT and Plast based on fixed frequency of REC condition loadings extracted from REC condition
     ARC.PARAFACanalysis(ProjectPath ,'FreqBand', [5 15],'VarianceMode','temporal','SaveFigures',true,'Conditions','Plast',...
-        'Corcondia',false,'ResultsPath',ResultsPath,...
+        'Corcondia',false,'ResultsPath',ResultsPath,'Space','Electrode',...
         'SubjectSelect',SubIndex, 'FixedFreqLoading', true, 'FixedModel','REC');
 
     ARC.PARAFACanalysis(ProjectPath ,'FreqBand', [5 15],'VarianceMode','temporal','SaveFigures',true,'Conditions','HSMT',...
-        'Corcondia',false,'ResultsPath',ResultsPath,...
+        'Corcondia',false,'ResultsPath',ResultsPath,'Space','Electrode',...
+    'SubjectSelect',SubIndex, 'FixedFreqLoading', true, 'FixedModel','REC');
+    
+    % SOURCE SPACE
+    % calculate ARCs for HSMT and Plast based on fixed
+    % frequency of REC condition loadings extracted from REC condition in
+    % source space
+    
+    ARC.PARAFACanalysis(ProjectPath ,'FreqBand', [5 15],'VarianceMode','temporal','SaveFigures',true,'Conditions','REC',...
+        'Corcondia',false,'ResultsPath',ResultsPath,'Space','Source',...
+        'SubjectSelect',SubIndex, 'FixedFreqLoading', true, 'FixedModel','REC');
+    
+    ARC.PARAFACanalysis(ProjectPath ,'FreqBand', [5 15],'VarianceMode','temporal','SaveFigures',true,'Conditions','Plast',...
+        'Corcondia',false,'ResultsPath',ResultsPath,'Space','Source',...
+        'SubjectSelect',SubIndex, 'FixedFreqLoading', true, 'FixedModel','REC');
+
+    ARC.PARAFACanalysis(ProjectPath ,'FreqBand', [5 15],'VarianceMode','temporal','SaveFigures',true,'Conditions','HSMT',...
+        'Corcondia',false,'ResultsPath',ResultsPath,'Space','Source',...
     'SubjectSelect',SubIndex, 'FixedFreqLoading', true, 'FixedModel','REC');
 end
 
 %% Group level analysis
-
-FileNames = {'REC1REC2REC3REC4','HSMTHSMT'};%{'REC1REC2REC3REC4','Plast','HSMTHSMT'};
-ModelNames = {'REC','HSMT'};%{'REC','Plast','HSMT'};
-ModelPath = fullfile(ResultsPath,['PARAFAC_' 'Electrode']);
-ARC.ParafacAnova(ModelPath,SubjectData(SubIndex),'FileNames',FileNames,'ModelNames',ModelNames,'ResultsPath',ResultsPath);
+cond = 1;% 1= rec and hsmt, 2= rec plast hsmt
+if cond ==1
+    FileNames = {'REC1REC2REC3REC4','HSMTHSMT'};
+    ModelNames = {'REC','HSMT'};
+else
+    FileNames = {'REC1REC2REC3REC4','Plast','HSMTHSMT'};% %
+    ModelNames = {'REC','Plast','HSMT'};
+end
+%
+Space = 'Source';
+ModelPath = fullfile(ResultsPath,['PARAFAC_' Space]);
+StatResults = ARC.ParafacAnova(ModelPath,SubjectData(SubIndex),'FileNames',FileNames,...
+    'ModelNames',ModelNames,'ResultsPath',ResultsPath,'Space',Space,'PermNum',500,'redoAnalysis',false,'redoANOAVfigs',false);
 
 
