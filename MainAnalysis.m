@@ -1,8 +1,9 @@
 clear; clc;
 
-ProjectPath = 'C:\Users\Elhamkhanom\Documents\My works\LongtermProject\ARCProject\DataAnonymization\EEGData\';
-addpath(genpath('C:\Users\Elhamkhanom\Documents\Codes\Git\ARC\'));
-ResultsPath = 'C:\Users\Elhamkhanom\Documents\My works\LongtermProject\ARCProject\Results';
+ProjectPath = '/Volumes/Elements/MyWorks/PhDWorks/long_term/ARCProject/DataAnonymization/EEGData/';
+
+addpath(genpath('/Users/elhamb/Documents/Codes/Git/ARC'));
+ResultsPath = '/Volumes/Elements/MyWorks/PhDWorks/long_term/ARCProject/Results';
 specanalysis = false;
 pfanalysis = false;
 
@@ -31,7 +32,7 @@ end
 if pfanalysis
     % SENSOR SPACE
     ARC.PARAFACanalysis(ProjectPath ,'FreqBand', [5 15],'VarianceMode','temporal','SaveFigures',true,'Conditions','REC',...
-        'Corcondia',false,'ResultsPath','C:\Users\Elhamkhanom\Documents\My works\LongtermProject\ARCProject\Results',...
+        'Corcondia',false,'ResultsPath',ResultsPath,...
         'SubjectSelect',SubIndex);
     
     calculate ARCs for HSMT and Plast based on fixed frequency of REC condition loadings extracted from REC condition

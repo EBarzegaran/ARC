@@ -118,7 +118,7 @@ classdef PFModel
                 if ~exist('Path','var')
                     Path = [];
                 end
-                File = subfiles([fullfile(Path,[SaveName Conditions]) '.mat'],1);
+                File = subfiles([fullfile(Path,[SaveName Conditions]) '*.mat'],1);
                 if ischar(File{1})
                     if numel(File)>1
                         warning('More than one PARAFAC model exist for this subject. Please indicate the conditions and variance mode')
