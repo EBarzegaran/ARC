@@ -9,6 +9,7 @@ classdef PFModel
         Elabel
         Conditions
         CondLength
+        Space
     end
     properties (Dependent)
        ARpeaks
@@ -17,7 +18,7 @@ classdef PFModel
     
     methods
         %% creat, save and load functions
-        function obj = PFModel(SubjectInfo, Model,Modes,VarMode,Freq,Elabel,Conditions,CondLength)
+        function obj = PFModel(SubjectInfo, Model,Modes,VarMode,Freq,Elabel,Conditions,CondLength,Space)
             % Initializing a PFModel object
             if exist('SubjectInfo','var')
                 obj.SubjectInfo = SubjectInfo;
@@ -65,10 +66,16 @@ classdef PFModel
             else
                 obj.VarMode = [];
             end
+            
+            if exist('Space','var')
+                obj.Space = Space;
+            else
+                obj.Space = 'Electrode';
+            end
         end
         
         function Name = SaveName(obj)
-            Name = ['PARAFAC_' obj.SubjectInfo.SubID '_RecordNum' num2str(obj.SubjectInfo.Longitude+1) '_' [obj.Conditions{:}] '_' obj.VarMode];
+            Name = ['PARAFAC_' obj.SubjectInfo.SubID '_RecordNum' num2str(obj.SubjectInfo.Longitude+1) '_' [obj.Conditions{:}] '_' obj.VarMode '_' obj.Space];
         end
         
         function savePFModel(obj,Path)
@@ -87,7 +94,7 @@ classdef PFModel
             end
         end
         
-        function obj = loadPFModel(obj,Path, SubjectInfo,Conditions,VarMode)
+        function obj = loadPFModel(obj,Path, SubjectInfo,Conditions,VarMode,Space)
             %loads the RES of the subject from the defined folder
             if ~exist('Conditions','var')
                 Conditions = '*';
@@ -97,6 +104,10 @@ classdef PFModel
                 end
                 if exist('VarMode','var')
                     Conditions = [Conditions '_' VarMode];
+                end
+                
+                if exist('Space','var')
+                    Conditions = [Conditions '_' Space];
                 end
             end
             try

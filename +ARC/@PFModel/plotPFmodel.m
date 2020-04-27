@@ -58,14 +58,29 @@ end
 % set(xlabh1,'Position',[P1(1) P2(2) P1(3)]);
 %% Plot spatial loadings
 colors = {'g','r','b','c'};
-load('ElectrodeLabels.mat');
+if strcmp(obj.Space,'Source')
+        load('MaptoSurface_400to5000.mat');
+        Th =0.3;
+        m1 = obj.Model{strcmpi(obj.Modes,'spatial')};
+        %m1=m1(1:3:end,:)+m1(2:3:end,:)+m1(3:3:end,:);
+        m1=(m1.^1.5)'*D;
+        m1=(m1-min(m1(:)))/(max(m1(:))-min(m1(:)));
+else
+    load('ElectrodeLabels.mat');
+end
+
 for C = 1:NumCom
-    modelallelec = zeros(64,1);
-    % find the electrodes
-    Elecs = cellfun(@(x) find(strcmpi(Elabel,x)),obj.Elabel,'uni',false);
-    Elecs = cat(1,Elecs{:});
-    modelallelec(Elecs) = obj.Model{strcmpi(obj.Modes,'spatial')}(:,Comp(C));
-    h2=subplot(3,4,C+8); ARC.Electrode_visulaization(modelallelec,1,colors{C});title(Cleg{C},'FontSize',FS,'Fontweight','bold');
+    if strcmp(obj.Space,'Source')
+        modelsource = m1(Comp(C),:);
+        h2=subplot(3,4,C+8); ARC.Source_visualization(modelsource,'back',colors{C},1);
+    else
+        modelallelec = zeros(64,1);
+        % find the electrodes
+        Elecs = cellfun(@(x) find(strcmpi(Elabel,x)),obj.Elabel,'uni',false);
+        Elecs = cat(1,Elecs{:});
+        modelallelec(Elecs) = obj.Model{strcmpi(obj.Modes,'spatial')}(:,Comp(C));
+        h2=subplot(3,4,C+8); ARC.Electrode_visualization(modelallelec,1,colors{C});title(Cleg{C},'FontSize',FS,'Fontweight','bold');
+    end
     set(h2,'position',[0.05+(C-1)*.23 0.02 0.20 0.30]);
 end
 

@@ -1,4 +1,4 @@
-function [RESdata] = RawEEGtoRES(ProjectPath,SubjectInfo, EpLen, MovWin ,HF,LF)
+function [RESdata] = RawEEGtoRES(ProjectPath,SubjectInfo, EpLen, MovWin ,HF,LF,Space,Inv)
 % This function read the data of this subject in
 % all conditions  and store it as ARC.RES (ARC toolbox, RES format for storing Resting EEG Structure)
 
@@ -31,9 +31,9 @@ function [RESdata] = RawEEGtoRES(ProjectPath,SubjectInfo, EpLen, MovWin ,HF,LF)
             % preprocess events and Calculating frequency components
             EpEv =events_preprocessing(EV,DATA, EpLen, MovWin,1);
             if (Cond==1 || Cond==4 )
-                [FftData,Freq,CohData,~]= fftprocessing(DATA,EpEv,EpLen,0,HF,LF,1);
+                [FftData,Freq,CohData,~]= fftprocessing(DATA,EpEv,EpLen,0,HF,LF,1,strcmp(Space,'Source'),Inv);
             else
-                [FftData,Freq,CohData]= fftprocessing(DATA,EpEv,EpLen,0,HF,LF,1);
+                [FftData,Freq,CohData]= fftprocessing(DATA,EpEv,EpLen,0,HF,LF,1,strcmp(Space,'Source'),Inv);
             end
             
             EpEv2 =events_preprocessing(EV,DATA, EpLen, EpLen,1);% For epoching the data, the overlap is zero
@@ -50,7 +50,7 @@ function [RESdata] = RawEEGtoRES(ProjectPath,SubjectInfo, EpLen, MovWin ,HF,LF)
     if numel(DATA.label)>64
         DATA.label = DATA.label(1:64);
     end
-RESdata = ARC.RES(SubjectInfo,FData,CondNames,EpLen,MovWin,Freq,DATA.label);
+RESdata = ARC.RES(SubjectInfo,FData,CondNames,EpLen,MovWin,Freq,Space,DATA.label);
 end
 
 %% EVENT marking functions
@@ -256,7 +256,7 @@ for ev = 1:10
 
 end
 end
-function [FData,freq,CohData,cohf]= fftprocessing(DATA,EpEv,EpLen,Cohcom,hf,lf,param)
+function [FData,freq,CohData,cohf]= fftprocessing(DATA,EpEv,EpLen,Cohcom,hf,lf,param,doInv,Inv)
 % calculate fft, if SurfL is 1, then surface laplacian is applied
 % calculates coherence if Cohcom==1
 
@@ -273,18 +273,33 @@ for ev = 1:10
 
     FEEG=[];cm=[];
     if ~isempty(EpEv{ev})
-        FEEG = zeros(size(DATA.data,1),length(LF:HF),length(EpEv{ev}));
+        if doInv
+            FEEG = zeros(size(Inv,1)/3,length(LF:HF),length(EpEv{ev}));
+        else
+            FEEG = zeros(size(DATA.data,1),length(LF:HF),length(EpEv{ev}));
+        end
         EEG=[];
         Epoch = EpEv{ev};
         for ep=1:length(Epoch)
             EEG = DATA.data(:,Epoch(ep):Epoch(ep)+EpLen-1);
             if param ==1 % Normalized power spepctrum
                 feeg=fft((EEG.*Win)')'/EpLen;%(sum(Win(1,:)));
-                PSD = 2*feeg.*conj(feeg)/(mean(Win(1,:).^2)*(500/EpLen));
-                FEEG(:,:,ep) = PSD(:,LF:HF);
+                if doInv
+                    feeg = Inv*feeg;
+                    PSD = 2*feeg.*conj(feeg)/(mean(Win(1,:).^2)*(500/EpLen));
+                    FEEG(:,:,ep) = PSD(1:3:end,LF:HF)+PSD(2:3:end,LF:HF)+PSD(3:3:end,LF:HF);
+                else
+                    PSD = 2*feeg.*conj(feeg)/(mean(Win(1,:).^2)*(500/EpLen));
+                    FEEG(:,:,ep) = PSD(:,LF:HF);
+                end
             elseif param ==2 % FFT 
                 feeg = fft((EEG.*Win)')'/(sum(Win(1,:)));
-                FEEG(:,:,ep) = abs(feeg(:,LF:HF));
+                if doInv
+                    feeg = Inv*feeg;
+                    FEEG(:,:,ep) = abs(feeg(1:3:end,LF:HF))+abs(feeg(2:3:end,LF:HF))+abs(feeg(3:3:end,LF:HF));
+                else
+                    FEEG(:,:,ep) = abs(feeg(:,LF:HF));
+                end
             end
             
             if Cohcom==1

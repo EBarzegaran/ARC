@@ -9,14 +9,20 @@ opt = ParseArgs(varargin,...
     'Corcondia'     , false,...
     'VarianceMode'  , 'spatial',...
     'FixedFreqLoading', false,...
-    'FixedModel'      ,[]...
+    'FixedModel'      ,[],...
+    'Space'           ,'Electrode'...
     );
 %% default values
 if isempty(opt.Conditions)
     opt.Conditions = 'REC';
 end
 if isempty(opt.Electrodes)
-    opt.Electrodes = 1:min(numel(RESdata.Elabels),64);
+    if strcmp(RESdata.Space,'Source')
+        opt.Electrodes = 1:size(RESdata.FFTData(1).Data,1);
+        RESdata.Elabels = 1:size(RESdata.FFTData(1).Data,1);
+    else
+        opt.Electrodes = 1:min(numel(RESdata.Elabels),64);
+    end
 end
 
 %% Select the conditions
@@ -63,7 +69,7 @@ elseif strcmpi(opt.VarianceMode,'spatial')
 end
 
 PFresult = ARC.PFModel(RESdata.SubjectInfo, model,{'Spatial','Frequency','Temporal'},opt.VarianceMode,...
-    RESdata.Freq(FreqInd),RESdata.Elabels(opt.Electrodes),CondNames, CondLength);
+    RESdata.Freq(FreqInd),RESdata.Elabels(opt.Electrodes),CondNames, CondLength,opt.Space);
 
 PFresult =PFresult.OrganizeARCs(); % check the order of ARC1 and ARC2
 

@@ -1,5 +1,5 @@
 classdef RES
-    % Resting-state EEG Spectrum
+    % Resting-state EEG () Spectrum
     properties
         SubjectInfo
         FFTData
@@ -7,11 +7,12 @@ classdef RES
         EpochLen
         Elabels
         Overlap
+        Space
     end
     
     methods
         %% creat, save and load functions
-        function obj = RES(SubjectInfo, FFTData,CondNames, EpochLen, Overlap,Freq,Elabels)
+        function obj = RES(SubjectInfo, FFTData,CondNames, EpochLen, Overlap,Freq,Space,Elabels)
             % initialize a RES class object
             if exist('SubjectInfo','var')
                 obj.SubjectInfo = SubjectInfo;
@@ -43,6 +44,12 @@ classdef RES
                 obj.Elabels = [];
             end
             
+            if exist('Space','var')
+                obj.Space = Space;
+            else
+                obj.Space = [];
+            end
+            
             if exist('Overlap','var')
                 obj.Overlap = Overlap;
             else
@@ -53,7 +60,7 @@ classdef RES
         function saveRES(obj,Path)
             % Saves the object in the deifined path
             try
-                SaveName = ['FFTData_' obj.SubjectInfo.SubID '_RecordNum' num2str(obj.SubjectInfo.Longitude+1)];
+                SaveName = ['FFTData_' obj.SubjectInfo.SubID '_RecordNum' num2str(obj.SubjectInfo.Longitude+1) '_' obj.Space];
             catch
                 error('SubjectInfo property should have SubID and Longitude fields');
             end
@@ -66,10 +73,13 @@ classdef RES
             end
         end
         
-        function obj = loadRES(obj,Path, subinfo)
+        function obj = loadRES(obj,Path, subinfo,Space)
             %loads the RES of the subject from the defined folder
+            if ~exist('Space','var')
+                Space = 'Electrode';
+            end
             try
-                SaveName = ['FFTData_' subinfo.SubID '_RecordNum' num2str(subinfo.Longitude+1) '.mat'];
+                SaveName = ['FFTData_' subinfo.SubID '_RecordNum' num2str(subinfo.Longitude+1) '_' Space '.mat'];
             catch
                 error('SubjectInfo should have SubID and Longitude fields');
             end
@@ -114,6 +124,10 @@ classdef RES
                 'Colors'        ,[],...
                 'SavePath'      ,[]...
                 );
+            if ~strcmp(obj.Space,'Electrode')
+                Warning ('Unable to plot spectrum: Not electrode space RES data');
+                return;
+            end
             
             % Condition list and default conditions
             CondList = {'REC','REC1','REC2','REC-Plast','REC3','REC-HSMT','REC4','REC-HN','REO','Plast','HSMT','HN'};
@@ -248,6 +262,7 @@ classdef RES
                 end
             end
         end
+        
     end
 end
 

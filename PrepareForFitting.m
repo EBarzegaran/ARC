@@ -11,10 +11,10 @@ pfanalysis = false;
 load('Subjectinfo.mat');
 SubIndex = find([SubjectData(:).Longitude]==0);
 %% Spectrum estimation
-SpecAnalysis = false;
+SpecAnalysis = true;
 if SpecAnalysis
-    EpochLen = 1000;
-    Overlap = 1000;
+    EpochLen = 500;
+    Overlap = 500;
     ARC.Spectrumanalysis(ProjectPath ,'FreqBand', [1 40],'Conditions',{'REC1','REO'},'RedoifExist',true,'EpochLen' ,EpochLen ,'Overlap' ,Overlap,...
              'FigurePath','C:\Users\Elhamkhanom\Documents\My works\LongtermProject\ARCProject\Results\FFTData_NNRfitting',...
              'SavePath',SavePath);
@@ -40,6 +40,6 @@ for S = 1:numel(SubIndex)
     end
     Freq{S} = RESdata.Freq;
 end
-
-save(fullfile(SavePath,'REC_REO_Averagre_Specs'),'AllSubFFTData','Freq','SubjectData');
+SubjectData = SubjectData(SubIndex);
+save(fullfile(SavePath,'REC_REO_Averagre_Specs_1sec'),'AllSubFFTData','Freq','SubjectData');
 
