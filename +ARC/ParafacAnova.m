@@ -9,8 +9,13 @@ opt = ParseArgs(varargin,...
     'Space'         ,'Electrode',...
     'redoAnalysis'  , true,...
     'redoANOAVfigs' ,true,...
-    'PermNum'       ,1000 ...
+    'PermNum'       ,1000, ...
+    'plotasd'       ,false...
     );
+
+if strcmp(opt.Space,'Source')
+    opt.asd = false;
+end
 %% Load PARAFAC models
 for sub = 1:numel(SubInfo)
     for ml = 1:numel(opt.FileNames)
@@ -71,8 +76,10 @@ else
     PHStatResults = Results.StatResults;
 end
 
+
 %% plot the ANOVA results
 FacNames = {'ARC','Condition','ARC X Condition'};
+
 if opt.redoANOAVfigs
     if strcmp(opt.Space,'Source')
         Orient = {'left','back','right'};
@@ -81,7 +88,6 @@ if opt.redoANOAVfigs
     end
     noClust = false;
     Fhandler = figure;
-    
     set(Fhandler,'PaperPositionMode','manual');
     set(Fhandler,'PaperPosition',[.25 .25 7 2*numel(Orient)]);
     set(Fhandler,'Unit','inch','Position',[0 0 7 2*numel(Orient)]);
@@ -148,12 +154,12 @@ if opt.redoANOAVfigs
             
         end
     end
-
-    %
     if noClust
         print(fullfile(opt.ResultsPath,'GroupLevel',[FileName 'NoCluster.tif']),'-dtiff','-r300');
+        export_fig(Fhandler,fullfile(opt.ResultsPath,'GroupLevel',[FileName 'NoCluster.tif']),'-pdf')
     else
         print(fullfile(opt.ResultsPath,'GroupLevel',[FileName '.tif']),'-dtiff','-r300');
+        export_fig(Fhandler,fullfile(opt.ResultsPath,'GroupLevel',[FileName]),'-pdf')
     end
     close;
 end
@@ -291,6 +297,106 @@ for i = 1:numel(PHStatResults)
 
 end
 
+%% plot ASDs and their power spectra in sensor space nad supression
+if opt.plotasd
+    Colors = [0  .6 0; .6 0 0];
+
+    FS = 14;
+    Fhandler = figure;
+    set(Fhandler,'unit','inch','Position',[.25 .25 20 8],'color','w');
+
+    % Plot the average frequencies
+    Freqls = FreqLoad(:,1);
+    Freqls = cat(3,Freqls{:});Freqls = Freqls./sum(Freqls,1);
+    Freq = ModelAll{1,1}.Freq;
+    for arc = 1:2
+        subplot(2,4,(arc-1)*(4)+1)
+        M = squeeze(mean(Freqls(:,arc,:),3));
+        SEM = squeeze(std(Freqls(:,arc,:),[],3))./sqrt(size(Freqls,3));
+        F = fill([Freq'; flip(Freq')],[M; flip(M)]+[SEM; -flip(SEM)],Colors(arc,:),'edgecolor','none');
+        set(F,'facealpha',.5);
+        hold on;
+        plot(Freq,M,'linewidth',1.5,'color',Colors(arc,:));
+        set(gca,'xtick',6:2:15,'ytick',[],'fontsize',FS)
+        if arc ==1
+            title('Frequency distribution');
+        end
+        ylabel(['ARC' num2str(arc)],'fontweight','bold');
+        box off;
+        xlabel('Frequency (Hz)')
+    end
+
+    % Average topographies of ARC1 and ARC2
+    for cnd = 1:2
+        for arc = 1:2
+            subplot(2,4,(arc-1)*(4)+cnd+1)
+            ARC.Electrode_visualization(mean(ASDmat(:,arc,cnd,:),4),0,'jet',[]); axis tight
+            if cnd ==1
+                caxis([0 5])
+            else
+                caxis([0 3])
+            end
+            ASDchange(:,arc,:) = squeeze(((ASDmat(:,arc,1,:) - ASDmat(:,arc,2,:)))./ASDmat(:,arc,1,:));
+            CB = colorbar;
+            CBP = get(CB,'position');
+            set(get(CB,'title'),'string','ASD (\muV)')
+            %set(CB,'position',CBP-[-0.05 .0 .00 .01])
+
+            set(gca,'fontsize',FS);
+            if arc ==1
+                if cnd==1,title('REC');end
+                if cnd==2,title('HSMT');end
+            end
+        end
+    end
+
+    % %supression analysis
+    subplot(2,4,4), ARC.Electrode_visualization(mean(ASDchange(:,1,:),3)*100,0,'parula',[]); axis tight
+    %text(-150 ,0,'%Change (REC-HSMT)/REC','rotation',90,'fontsize',FS,'fontweight','bold','HorizontalAlignment','center')
+    title('Suppression')
+    colorbar;
+    set(gca,'fontsize',FS);
+    CB = colorbar;
+    set(get(CB,'title'),'string','%Supression')
+    caxis([30 50])
+
+    subplot(2,4,8), ARC.Electrode_visualization(mean(ASDchange(:,2,:),3)*100,0,'parula',[]); axis tight
+    set(gca,'fontsize',FS);
+    %title('% Suppression')
+    CB = colorbar;
+    set(get(CB,'title'),'string','%supression')
+    caxis([30 60])
+    FileName_temp = ['GroupLevelAverage_' [Results.Conditions{:}] '_Var' Results.VarianceMode '_' num2str(numel(Results.SubjectInfo)) 'Subs'];
+    export_fig(Fhandler,fullfile(opt.ResultsPath,'GroupLevel',[FileName]),'-pdf')
+    %
+    %ASDchange = (ASDmat(:,arc,1,:) - ASDmat(:,arc,2,:))./ASDmat(:,arc,1,:);
+    ASDmat_N = ASDmat./max(ASDmat,[],1);
+    NPerm = 100;
+    StatResults_temp1 = RmAnovaPermute(permute(squeeze(ASDmat_N(:,1,:,:)),[3 1 2]),A, NPerm,.01,'mass');
+    StatResults_temp2 = RmAnovaPermute(permute(squeeze(ASDmat_N(:,2,:,:)),[3 1 2]),A,NPerm,.01,'mass');
+    StatResults_temp3 = RmAnovaPermute(permute(ASDchange,[3 1 2]),A,NPerm,.01,'mass');
+
+    Fhandler = figure;
+    set(Fhandler,'unit','inch','Position',[.25 .25 15 5],'color','w');
+
+    for i = 1:3
+        subplot(1,3,i)
+        eval(['SR  = StatResults_temp' num2str(i) '{1};']);
+        SC = [SR.Clusters.Pvalue]<0.05;
+        SN = [SR.Clusters(SC).Nodes];
+        ARC.Electrode_visualization(SR.Uncorrected.F',0,'parula',SN,false); axis tight
+        CB = colorbar;
+        set(get(CB,'title'),'string','F-value')
+        set(gca,'fontsize',FS);
+        %caxis([0 14])
+        if i==1,title('REC');end
+        if i==2,title('HSMT');end
+        if i==3,title('Suppression');end
+    end
+
+    export_fig(Fhandler,fullfile(opt.ResultsPath,'GroupLevel',[FileName '_Planned']),'-pdf')
+    close;
+end
 end
 
 

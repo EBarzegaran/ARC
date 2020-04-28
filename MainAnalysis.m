@@ -1,9 +1,9 @@
 clear; clc;
 
-ProjectPath = '/Volumes/Elements/MyWorks/PhDWorks/long_term/ARCProject/DataAnonymization/EEGData/';
+ProjectPath = '/Volumes/Elham-Unifr/LongtermProject/ARCProject/DataAnonymization/EEGData/';
 
 addpath(genpath('/Users/elhamb/Documents/Codes/Git/ARC'));
-ResultsPath = '/Volumes/Elements/MyWorks/PhDWorks/long_term/ARCProject/Results';
+ResultsPath = '/Volumes/Elham-Unifr/LongtermProject/ARCProject/Results';
 specanalysis = false;
 pfanalysis = false;
 
@@ -73,6 +73,7 @@ else
 end
 %
 Space = 'Source';
+%Space = 'Electrode';
 ModelPath = fullfile(ResultsPath,['PARAFAC_' Space]);
 StatResults = ARC.ParafacAnova(ModelPath,SubjectData(SubIndex),'FileNames',FileNames,...
     'ModelNames',ModelNames,'ResultsPath',ResultsPath,'Space',Space,'PermNum',500,'redoAnalysis',false,'redoANOAVfigs',false);

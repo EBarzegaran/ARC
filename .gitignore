@@ -1,1 +1,6 @@
 *.asv
+*.DS_Store
+*~
+*.asv
+AdvancedAnalysis/*.mat
+AdvancedAnalysis/*.tif

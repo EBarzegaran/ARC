@@ -2,7 +2,7 @@
 % load the behavior data
 
 clear; clc;
-load('/Volumes/Elements/MyWorks/PhDWorks/long_term/ARCProject/Cognitive_performance_controls.mat');
+load('/Volumes/Elham-Unifr/LongtermProject/ARCProject/Cognitive_performance_controls.mat');
 
 SubIDs= [1;3;4;8;9;12;13;16;17;19;21;22;23;27;29;32;34;37;38;44;47;48;52;61;65;66;70;72;78;]; %these are the subject with REC and HSMT and Plast: 49 and 63 -> good subjects without plast
 %%

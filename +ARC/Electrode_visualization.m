@@ -1,4 +1,4 @@
-function Electrode_visulaization(Data,normali,color,eleclist)
+function Electrode_visulaization(Data,normali,color,eleclist,trp)
 % Data is a 64x1 vector including positive values(for now only positive)of power for each electrode
 %normalize Data
 % color: the desired color of map
@@ -8,6 +8,12 @@ end
 if ~exist('eleclist','var')
     eleclist = [];
 end
+
+if ~exist('trp','var')
+    trp = false;
+end
+
+
 Data = 1-Data;
 %%
 BadEl = [13 19];
@@ -40,17 +46,33 @@ switch color
     case {'hotcortex','coolhotcortex'}
        XX = 1-Data;
        colormap(jmaColors(color)); 
+    otherwise
+        XX = 1-Data;
+        colormap(color);
 end
 %patch('faces',tri,'vertices',[y x 0*x],'facevertexcdata',reshape(XX,numel(XX),1),'facecolor','interp','edgecolor','none');
-patch('faces',tri,'vertices',[y x 0*x],'facevertexcdata',XX,'facecolor','interp','edgecolor','none');
+patch('faces',tri,'vertices',[y x 0*x],'facecolor',[.6 .6 .6],'edgecolor',[.4 .4 .4]);
+hold on;
+P = patch('faces',tri,'vertices',[y x 0*x],'facevertexcdata',XX,'facecolor','interp','edgecolor',[.4 .4 .4]);
 
+%% plot significant electrodes
 hold on; 
+scatter(y,x,10,[.4 .4 .4],'filled'); 
 
 if ~isempty(eleclist)
-    Elecs = zeros(1,64);Elecs(eleclist)=1;Elecs = Elecs==1;
-    Elecs(BadEl)=[];
-    scatter(y(Elecs),x(Elecs),20,'b','linewidth',2,'Marker','o'); 
+    if trp % add transparency for significance effect
+        Elecs = zeros(1,64);Elecs(eleclist)=1;Elecs = Elecs==1;
+        Elecs(BadEl)=[];
+        P.FaceVertexAlphaData = double(Elecs)';   % Set vertex transparency to x values
+        P.FaceAlpha = 'interp' ;   
+    else
+         Elecs = zeros(1,64);Elecs(eleclist)=1;Elecs = Elecs==1;
+        Elecs(BadEl)=[];
+        %scatter(y(Elecs),x(Elecs),20,'b','linewidth',2,'Marker','o'); 
+        scatter(y(Elecs),x(Elecs),40,'MarkerEdgeColor', [1 1 1],'MarkerFaceColor',[1 0 0]); 
+    end
 end
+
 % load Cental_electrode.mat;EL = 1:64;EL(BadEl)=[];[E,I] = intersect (EL,Central_elec2);
 % scatter(y(I),x(I),80,'r','filled'); 
 %%
