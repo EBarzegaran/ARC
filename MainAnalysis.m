@@ -62,7 +62,7 @@ if pfanalysis
     'SubjectSelect',SubIndex, 'FixedFreqLoading', true, 'FixedModel','REC');
 end
 
-%% Group level analysis
+%% Group level analysis in sensor space
 cond = 1;% 1= rec and hsmt, 2= rec plast hsmt
 if cond ==1
     FileNames = {'REC1REC2REC3REC4','HSMTHSMT'};
@@ -72,10 +72,15 @@ else
     ModelNames = {'REC','Plast','HSMT'};
 end
 %
-Space = 'Source';
-%Space = 'Electrode';
+Space = 'Electrode';
 ModelPath = fullfile(ResultsPath,['PARAFAC_' Space]);
 StatResults = ARC.ParafacAnova(ModelPath,SubjectData(SubIndex),'FileNames',FileNames,...
-    'ModelNames',ModelNames,'ResultsPath',ResultsPath,'Space',Space,'PermNum',500,'redoAnalysis',false,'redoANOAVfigs',false);
+    'ModelNames',ModelNames,'ResultsPath',ResultsPath,'Space',Space,'PermNum',500,'redoAnalysis',false,'redoANOAVfigs',false,'plotasd',true);
+%% Group level analysis in sensor space
+
+Space = 'Source';
+ModelPath = fullfile(ResultsPath,['PARAFAC_' Space]);
+StatResults = ARC.ParafacAnova(ModelPath,SubjectData(SubIndex),'FileNames',FileNames,...
+    'ModelNames',ModelNames,'ResultsPath',ResultsPath,'Space',Space,'PermNum',500,'redoAnalysis',false,'redoANOAVfigs',false,'plotasd',true);
 
 
