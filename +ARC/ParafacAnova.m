@@ -319,7 +319,7 @@ if opt.redoANOAVfigs
 
     end
 end
-%% plot ASDs and their power spectra in sensor space nad supression
+%% plot ASDs and their power spectra in sensor space and supression
 if opt.plotasd
     Colors = [0  .6 0; .6 0 0];
 
@@ -405,8 +405,8 @@ if opt.plotasd
     ASDmat_N = ASDmat./max(ASDmat,[],1);
     NPerm = 100;
     StatResults_temp1 = RmAnovaPermute(permute(squeeze(ASDmat(:,:,1,:)),[3 1 2]),A, NPerm,.05,'mass');
-    StatResults_temp2 = RmAnovaPermute(permute(squeeze(ASDmat_N(:,:,2,:)),[3 1 2]),A,NPerm,.05,'mass');
-    StatResults_temp3 = RmAnovaPermute(permute(ASDchange,[3 1 2]),A,NPerm,.01,'mass');
+    StatResults_temp2 = RmAnovaPermute(permute(squeeze(ASDmat(:,:,2,:)),[3 1 2]),A,NPerm,.05,'mass');
+    StatResults_temp3 = RmAnovaPermute(permute(ASDchange,[3 1 2]),A,NPerm,.05,'mass');
 
 %
     if strcmpi(opt.Space,'Electrode')   
@@ -442,7 +442,100 @@ if opt.plotasd
         for i = 1:3
             
             eval(['SR  = StatResults_temp' num2str(i) '{1};']);
+            SC = [SR.Clusters.Pvalue]<0.1;
+            SN = [SR.Clusters(SC).Nodes];
+            clusterm = zeros(size(SR.Uncorrected.F));
+            clusterm((SN)) = SR.Uncorrected.F(SN);
+            clusterm = clusterm*D;
+            
+            for Or = 1:numel(Orient)
+                S = subplot(3,numel(Orient),(i-1)*numel(Orient)+Or);
+                
+                
+                
+                ARC.Source_visualization(clusterm,Orient{Or},'hotcortex',0,hemi{Or},[]);
+            
+                 mt = 0;%floor(min(PHStatResults{i}.Uncorrected.F));
+                 Mt = ceil(max(SR.Uncorrected.F));
+                 axis tight; axis vis3d;
+                 caxis([mt-1 Mt]);
+                 SP = get(S,'position');
+                 if Or ==numel(Orient)
+                    CB = colorbar;
+                    set(get(CB,'title'),'string','F-Stats')
+                    %CB.YAxisLocation = 'left';
+                    set(CB,'position',get(CB,'position')+[.06 0.01 -.00 -.08]);
+                 end
+                 if i==1
+                        title(titles{Or})
+                 end
+                if Or==1 
+                    if i<3
+                        axes('Position',[0.05 0.72-(.3*(i-1)) 0.05 0.15]); axis off
+                    else
+                        axes('Position',[0.05 0.1 0.05 0.15]); axis off
+                    end
+                    text(0.1,0.7,FacNames{i},'fontsize',10,'rotation',90,'HorizontalAlignment','center');
+
+                    %axis on;
+                end
+            end
+            set(gca,'fontsize',FS);
+
+        end
+    end
+    
+    export_fig(Fhandler,fullfile(opt.ResultsPath,'GroupLevel',[FileName '_Planned_2']),'-pdf')
+    close;
+    
+    
+    %plot condition effect
+       %ASDchange = (ASDmat(:,arc,1,:) - ASDmat(:,arc,2,:))./ASDmat(:,arc,1,:);
+    %%%? why different from sensor
+    if strcmp(opt.Space,'Electrode')
+        ASDmat_N = ASDmat./max(ASDmat,[],1);
+    else
+        ASDmat_N = ASDmat;
+    end
+    NPerm = 100;
+    StatResults_temp1 = RmAnovaPermute(permute(squeeze(ASDmat_N(:,1,:,:)),[3 1 2]),A, NPerm,.01,'mass');
+    StatResults_temp2 = RmAnovaPermute(permute(squeeze(ASDmat_N(:,2,:,:)),[3 1 2]),A,NPerm,.01,'mass');
+    StatResults_temp3 = RmAnovaPermute(permute(ASDchange,[3 1 2]),A,NPerm,.01,'mass');
+    FacNames = {'ARC1','ARC2','Suppression'};
+%
+    if strcmpi(opt.Space,'Electrode')   
+        Fhandler = figure;
+        set(Fhandler,'unit','inch','Position',[.25 .25 5 15],'color','w');
+
+        for i = 1:3
+            subplot(3,1,i)
+            eval(['SR  = StatResults_temp' num2str(i) '{1};']);
             SC = [SR.Clusters.Pvalue]<0.05;
+            SN = [SR.Clusters(SC).Nodes];
+            ARC.Electrode_visualization(SR.Uncorrected.F',0,'parula',SN,false); axis tight
+            CB = colorbar;
+            set(get(CB,'title'),'string','F-value')
+            set(gca,'fontsize',FS);
+            %caxis([0 14])
+            title(FacNames(i));
+
+        end
+        
+    elseif strcmpi(opt.Space,'Source')
+        
+        Orient  = {'left','right','back','right','left'};
+        hemi    = {[],'left',[],[],'right'};
+        titles  = {'left-lateral','left-medial','posterior','right-lateral','right-medial'};
+        
+        load('MaptoSurface_400to5000.mat');
+    
+        Fhandler = figure;
+        set(Fhandler,'unit','inch','Position',[.25 .25 2*numel(Orient) 6],'color','w');
+        
+        for i = 1:3
+            
+            eval(['SR  = StatResults_temp' num2str(i) '{1};']);
+            SC = [SR.Clusters.Pvalue]<0.4;
             SN = [SR.Clusters(SC).Nodes];
             
             for Or = 1:numel(Orient)
@@ -484,7 +577,7 @@ if opt.plotasd
         end
     end
     
-    export_fig(Fhandler,fullfile(opt.ResultsPath,'GroupLevel',[FileName '_Planned']),'-pdf')
+    export_fig(Fhandler,fullfile(opt.ResultsPath,'GroupLevel',[FileName '_Planned_1']),'-pdf')
     close;
 end
 end

@@ -103,6 +103,7 @@ if strcmp(hemis,'left')||strcmp(hemis,'right')
     XX = XX(ind,:);
 end
 %%
+XX(isnan(XX))=0;
 
 patch('faces',g3.faces,'vertices',g3.vertices,'edgecolor','none','facecolor','interp','facevertexcdata',XX,'FaceAlpha',0.85,...
     'AmbientStrength',0.45,'SpecularStrength',0.1,'DiffuseStrength', 0.45,'SpecularExponent',10,'FaceLighting','gouraud');axis off;%set(gca,'Color',[.1 .1 1]);
